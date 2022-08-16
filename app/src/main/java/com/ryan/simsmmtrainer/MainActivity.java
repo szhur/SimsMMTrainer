@@ -18,14 +18,58 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        m_spells = new ArrayList<>();
+
         Button startBtn = findViewById(R.id.startBtn);
         startBtn.setOnClickListener(view -> {
             generateSolution();
         });
     }
 
+    private void firstRun(int contraNum)
+    {
+        if (contraNum != m_enemyExclude)
+        {
+            for (int i = 0; i < m_spells.size(); ++i)
+            {
+                if (i == m_heroExclude || i == contraNum)
+                    continue;
+
+                Spell spell = m_spells.get(i);
+                if (spell.getFirstContra() == contraNum || spell.getSecondContra() == contraNum)
+                {
+                    spell.define(contraNum);
+                }
+            }
+        }
+    }
+
+    private void secondRun()
+    {
+        for (int i = 0; i < m_spells.size(); ++i)
+        {
+            if (i == m_heroExclude || m_spells.get(i).isDefined())
+                continue;
+
+            Spell spell = m_spells.get(i);
+            for (int j = 0; j < m_spells.size(); ++j)
+            {
+                if (j == m_heroExclude || i == j || !m_spells.get(j).isDefined())
+                    continue;
+
+                int defined = m_spells.get(j).getDefined();
+                if (spell.getFirstContra() == defined)
+                    spell.define(spell.getSecondContra());
+                else if (spell.getSecondContra() == defined)
+                    spell.define(spell.getFirstContra());
+            }
+        }
+    }
+
     private void generateSolution()
     {
+        m_spells.clear();
+
         // TODO: Stop and drop warning if some of buttons not selected (use RadioGroup)
         ArrayList<RadioButton> heroGrp = new ArrayList<>();
         heroGrp.add(findViewById(R.id.heroBtnBlue));
@@ -33,12 +77,11 @@ public class MainActivity extends AppCompatActivity {
         heroGrp.add(findViewById(R.id.heroBtnBlack));
         heroGrp.add(findViewById(R.id.heroBtnYellow));
         heroGrp.add(findViewById(R.id.heroBtnWhite));
-        int heroExclude = 0;
         for (int i = 0; i < heroGrp.size(); ++i)
         {
             if (heroGrp.get(i).isChecked())
             {
-                heroExclude = i;
+                m_heroExclude = i;
                 break;
             }
         }
@@ -49,30 +92,29 @@ public class MainActivity extends AppCompatActivity {
         enemyGrp.add(findViewById(R.id.enemyBtnBlack));
         enemyGrp.add(findViewById(R.id.enemyBtnYellow));
         enemyGrp.add(findViewById(R.id.enemyBtnWhite));
-        int enemyExclude = 0;
         for (int i = 0; i < enemyGrp.size(); ++i)
         {
             if (enemyGrp.get(i).isChecked())
             {
-                enemyExclude = i;
+                m_enemyExclude = i;
                 break;
             }
         }
 
-        ArrayList<Spell> spells = new ArrayList<>();
-        spells.add(
+        // TODO: Add at least Russian and English version
+        m_spells.add(
                 new Spell("Синий торнадо", 2, 3, R.drawable.blue_tornado)
         );
-        spells.add(
+        m_spells.add(
                 new Spell("Красная волна", 0, 2, R.drawable.red_wave )
         );
-        spells.add(
+        m_spells.add(
                 new Spell("Черная буря", 3, 4, R.drawable.black_storm)
         );
-        spells.add(
+        m_spells.add(
                 new Spell("Желтая сера", 1, 4, R.drawable.yellow_sulfur)
         );
-        spells.add(
+        m_spells.add(
                 new Spell("Белая молния", 0, 1, R.drawable.white_lighting)
         );
 
@@ -82,110 +124,49 @@ public class MainActivity extends AppCompatActivity {
         spellImages.add(findViewById(R.id.tSpell));
         spellImages.add(findViewById(R.id.frSpell));
 
-        // TODO: Lines 50-54 and 66-80 are fully duplicates
-        int contraNum  = spells.get(heroExclude).getFirstContra();
-        if (contraNum != enemyExclude)
+        firstRun(m_spells.get(m_heroExclude).getFirstContra());
+
+        firstRun(m_spells.get(m_heroExclude).getSecondContra());
+
+        for (int i = 0; i < m_spells.size(); ++i)
         {
-            for (int i = 0; i < spells.size(); ++i)
-            {
-                if (i == heroExclude || i == contraNum)
-                    continue;
-
-                Spell spell = spells.get(i);
-                if (spell.getFirstContra() == contraNum || spell.getSecondContra() == contraNum)
-                {
-                    spell.define(contraNum);
-                }
-            }
-        }
-
-        contraNum  = spells.get(heroExclude).getSecondContra();
-        if (contraNum != enemyExclude)
-        {
-            for (int i = 0; i < spells.size(); ++i)
-            {
-                if (i == heroExclude || i == contraNum)
-                    continue;
-
-                Spell spell = spells.get(i);
-                if (spell.getFirstContra() == contraNum || spell.getSecondContra() == contraNum)
-                {
-                    spell.define(contraNum);
-                }
-            }
-        }
-
-        // TODO: Next three loops have very similar if clause
-        for (int i = 0; i < spells.size(); ++i)
-        {
-            if (i == enemyExclude || i == heroExclude || spells.get(i).isDefined())
+            if (i == m_enemyExclude || i == m_heroExclude || m_spells.get(i).isDefined())
                 continue;
 
-            Spell spell = spells.get(i);
-            if (spell.getFirstContra() == enemyExclude)
+            Spell spell = m_spells.get(i);
+            if (spell.getFirstContra() == m_enemyExclude)
                 spell.define(spell.getSecondContra());
-            else if (spell.getSecondContra() == enemyExclude)
+            else if (spell.getSecondContra() == m_enemyExclude)
                 spell.define(spell.getFirstContra());
         }
 
-        // TODO: Next two loops are fully duplicates
-        for (int i = 0; i < spells.size(); ++i)
-        {
-            if (i == heroExclude || spells.get(i).isDefined())
-                continue;
-
-            Spell spell = spells.get(i);
-            for (int j = 0; j < spells.size(); ++j)
-            {
-                if (j == heroExclude || i == j || !spells.get(j).isDefined())
-                    continue;
-
-                int defined = spells.get(j).getDefined();
-                if (spell.getFirstContra() == defined)
-                    spell.define(spell.getSecondContra());
-                else if (spell.getSecondContra() == defined)
-                    spell.define(spell.getFirstContra());
-            }
-        }
-
-        for (int i = 0; i < spells.size(); ++i)
-        {
-            if (i == heroExclude || spells.get(i).isDefined())
-                continue;
-
-            Spell spell = spells.get(i);
-            for (int j = 0; j < spells.size(); ++j)
-            {
-                if (j == heroExclude || i == j || !spells.get(j).isDefined())
-                    continue;
-
-                int defined = spells.get(j).getDefined();
-                if (spell.getFirstContra() == defined)
-                    spell.define(spell.getSecondContra());
-                else if (spell.getSecondContra() == defined)
-                    spell.define(spell.getFirstContra());
-            }
-        }
+        secondRun();
+        secondRun();
 
         TextView spellLbl = findViewById(R.id.spellLbl);
         int indicator = 0;
-        for (int i = 0; i < spells.size(); ++i)
+        for (int i = 0; i < m_spells.size(); ++i)
         {
-            if (i == enemyExclude)
+            if (i == m_enemyExclude)
             {
                 indicator = 1;
                 continue;
             }
 
             ImageView image = spellImages.get(i - indicator);
-            image.setImageResource(spells.get(i).getImageId());
+            image.setImageResource(m_spells.get(i).getImageId());
             final int finalI = i;
             image.setOnClickListener(view -> {
-                for (int j = 0; j < spells.size(); ++j) {
-                    if (finalI == spells.get(j).getDefined())
-                        spellLbl.setText(spells.get(j).getName());
+                for (int j = 0; j < m_spells.size(); ++j) {
+                    if (finalI == m_spells.get(j).getDefined())
+                        spellLbl.setText(m_spells.get(j).getName());
                 }
             });
         }
     }
+
+    private ArrayList<Spell> m_spells;
+
+    private int m_heroExclude;
+    private int m_enemyExclude;
 }
